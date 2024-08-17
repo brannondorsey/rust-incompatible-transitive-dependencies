@@ -1,0 +1,9 @@
+[package]
+name = "dependency-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+a = { version = "0.1.0", path = "a" }
+b = { version = "0.1.0", path = "b" }
+simple_logger = "5.0.0"
