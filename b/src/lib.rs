@@ -1,3 +1,4 @@
+// Required for the outdated 0.3.* version of log
 #[macro_use]
 extern crate log;
 

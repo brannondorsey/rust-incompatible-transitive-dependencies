@@ -27,15 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dependency-test"
-version = "0.1.0"
-dependencies = [
- "a",
- "b",
- "simple_logger",
-]
-
-[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -114,6 +105,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "rust-incompatible-transitive-version-example"
+version = "0.1.0"
+dependencies = [
+ "a",
+ "b",
+ "simple_logger",
 ]
 
 [[package]]
