@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate log;
 
+use log::info;
+
 pub fn log() {
-    log::info!("logged using log@0.3.9");
+    info!("logged using log@0.3.9");
 }
