@@ -4,21 +4,21 @@ Yes it can.
 
 ## Background
 
-As I've continued learning Rust and the cargo ecosystem, one question has continued to plague me:
+As I've continued learning Rust and the Cargo ecosystem, one question has continued to puzzle me:
 
-> Can a rust project import multiple SemVer incompatible library crates, or will the dependency resolver reject this scenario and your code will fail to compile?
+> Can a Rust project import multiple SemVer-incompatible library crates, or will the dependency resolver reject this scenario and cause your code to fail to compile?
 
 ### Transitive dependency conflicts
 
-This is a scenario which occurs mostly with [transitive dependencies](https://en.wikipedia.org/wiki/Transitive_dependency) in and can be a real headache, especially if you are using unmaintained libraries. A transitive dependency is a dependency of one of your dependencies, and you often don't get to control this version.
+This is a scenario which occurs mostly with [transitive dependencies](https://en.wikipedia.org/wiki/Transitive_dependency) and sorting them out can be a real headache, especially if you are using unmaintained libraries. A transitive dependency is a dependency of one of your dependencies, and you often don't get to control this version.
 
-> A (your app) > B (your app's dependency) > C (youre dependency's dependency)
+> A (your app) > B (your app's dependency) > C (your dependency's dependency)
 
-In this scenario, A and C are considered transitive dependencies.
+In this scenario, C is considered a transitive dependency of A.
 
-### Is rust like `npm` or is it like `pip`?
+### Is Rust like `npm` or is it like `pip`?
 
-Does the Rust/cargo ecosystem behave more like [`npm` + Node.js in allowing](#nodejs--npm) incompatible transitive dependency versions or is it like [`pip` + Python and does not](#python--pip)?
+Does the `cargo` + Rust ecosystem behave more like [`npm` + Node.js by allowing](#nodejs--npm) incompatible transitive dependency versions, or is it more like [`pip` + Python](#python--pip), which does not?
 
 Spoiler: It behaves like `npm` and thank god for that. 😇
 
@@ -42,6 +42,8 @@ cargo run # see example output below
 ```
 
 ### Show me the code
+
+The example binary crate below uses two library crates, `a` and `b`, each requiring their own incompatible versions of the [log](https://crates.io/crates/log) crate.
 
 `cargo.toml`
 
@@ -122,6 +124,24 @@ pub fn log() {
 }
 ```
 
+## Can I check for dupes?
+
+It turns out Cargo actually has a nifty method to check your dependencies for duplicate versions.
+
+```plain
+cargo tree --duplicates
+log v0.3.9
+└── b v0.1.0 (/home/brannon/Documents/code/rust-incompatible-transitive-dependencies/b)
+    └── rust-incompatible-transitive-version-example v0.1.0 (/home/brannon/Documents/code/rust-incompatible-transitive-dependencies)
+
+log v0.4.22
+├── a v0.1.0 (/home/brannon/Documents/code/rust-incompatible-transitive-dependencies/a)
+│   └── rust-incompatible-transitive-version-example v0.1.0 (/home/brannon/Documents/code/rust-incompatible-transitive-dependencies)
+├── log v0.3.9 (*)
+└── simple_logger v5.0.0
+    └── rust-incompatible-transitive-version-example v0.1.0 (/home/brannon/Documents/code/rust-incompatible-transitive-dependencies)
+```
+
 ## What's happening under the hood?
 
 ```bash
@@ -149,7 +169,7 @@ target/release
 └── rust-incompatible-transitive-version-example.d
 ```
 
-Notice that cargo has built two versions of the `.d`, `.rmeta`, and `.rlib` files for each separate version of the log dependency. The linker will use these separate files to include separate.
+Notice that Cargo has built two versions of the `.d`, `.rmeta`, and `.rlib` files for each separate version of the log dependency.
 
 > NOTE: Run `cat target/release/deps/log-*.d` to see which source files were used to generate each compiled binary file.
 
@@ -161,16 +181,23 @@ As an exercise, try setting SemVer _compatible_ versions of the log crate in `a/
 
 You should see only a single collection of intermediate files named `*log*`.
 
-> NOTE: Did you change `b/Cargo.toml` to a `0.4` version of log that is _lower_ than `0.4.22`? If so, you may be surprised to find only the `0.4.22` version requested by `a/Cargo.toml` was fetched and built. This is because the Cargo dependency resolver takes the liberty to use the highest SemVer compatible crate version required by another depency. I.e. `0.4.10` can be treated by Cargo as `0.4.x`.
+> NOTE: Did you change `b/Cargo.toml` to a `0.4` version of log that is _lower_ than `0.4.22`? 
+>
+> If so, you may be surprised to find only the `0.4.22` version requested by `a/Cargo.toml` was fetched and built. This is because the Cargo dependency resolver takes the liberty to use the highest SemVer compatible crate version required by another dependency. I.e. `0.4.10` can be treated by Cargo as `0.4.x` (unless it is specified like `=0.4.22` which should be avoided in most cases).
 
 ## How does this behavior relate to other languages?
 
 As you can see below, [Python can't handle](#python--pip) the situation we've just described above. But [Node.js can](#nodejs--npm).
 
+> NOTE: These languages were selected because they are both popular and have canonical package managers.
+
 ### Python + `pip`
 
+Unfortunately, you're out of luck if you find yourself using Python and requiring incompatible transitive dependency versions. The dependency resolver will simply reject your install and the path forward may be difficult.
+
 ```bash
-# Can actually be omitted because the install will fail and no modules will be globally anyw
+# Can actually be omitted because the install will fail 
+# and no modules will be globally anyway
 python -m venv venv && source venv/bin/activate
 
 cat <<EOF > requirements.txt
@@ -204,6 +231,8 @@ As far as I'm aware, this is a fundamental problem with Python packages and this
 
 ### Node.js + `npm`
 
+Like Cargo, the Node Package Manager (`npm`) allows multiple incompatible dependency versions to be used in the same project.
+
 ```bash
 cat <<EOF > package.json
 {
@@ -218,7 +247,7 @@ cat <<EOF > package.json
 }
 EOF
 
-npm install # Note the dependency resolver exits just fune
+npm install # Note the dependency resolver exits just fine
 
 grep har-validator package-lock.json
 ```
@@ -235,4 +264,9 @@ grep har-validator package-lock.json
 
 ```
 
-Notice how `npm` has resolved separate incompatible versions of the har-validator package? The former is the one we explicitly required and the later is the one request needs. Each resides in a separate location in `node_modules/` and can be accessed by our project at runtime.
+Notice how `npm` has resolved separate incompatible versions of the har-validator package? The former is the one we explicitly required and the later is the one `request` needs. Each resides in a separate location in `node_modules/` and can be accessed by the project at runtime.
+
+## References and further reading
+
+* The [Dependency Resolution](https://doc.rust-lang.org/cargo/reference/resolver.html) chapter of the Cargo book, particularly the section on [version incompatibility hazards](https://doc.rust-lang.org/cargo/reference/resolver.html#version-incompatibility-hazards).
+* The "Dependency Resolution with multiple versions?" [question](https://users.rust-lang.org/t/dependency-resolution-with-multiple-versions/81936) on the Rust language users forum (which was part of the motivation to create this example repo).
