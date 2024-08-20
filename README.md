@@ -181,7 +181,7 @@ As an exercise, try setting SemVer _compatible_ versions of the log crate in `a/
 
 You should see only a single collection of intermediate files named `*log*`.
 
-> NOTE: Did you change `b/Cargo.toml` to a `0.4` version of log that is _lower_ than `0.4.22`? 
+> NOTE: Did you change `b/Cargo.toml` to a `0.4` version of log that is _lower_ than `0.4.22`?
 >
 > If so, you may be surprised to find only the `0.4.22` version requested by `a/Cargo.toml` was fetched and built. This is because the Cargo dependency resolver takes the liberty to use the highest SemVer compatible crate version required by another dependency. I.e. `0.4.10` can be treated by Cargo as `0.4.x` (unless it is specified like `=0.4.22` which should be avoided in most cases).
 
@@ -270,3 +270,5 @@ Notice how `npm` has resolved separate incompatible versions of the har-validato
 
 * The [Dependency Resolution](https://doc.rust-lang.org/cargo/reference/resolver.html) chapter of the Cargo book, particularly the section on [version incompatibility hazards](https://doc.rust-lang.org/cargo/reference/resolver.html#version-incompatibility-hazards).
 * The "Dependency Resolution with multiple versions?" [question](https://users.rust-lang.org/t/dependency-resolution-with-multiple-versions/81936) on the Rust language users forum (which was part of the motivation to create this example repo).
+* This older post on [version selection in Cargo](https://web.archive.org/web/20180726081617/http://aturon.github.io/2018/07/25/cargo-version-selection/) (circa 2018).
+* A post about this repo on the [r/rust](https://www.reddit.com/r/rust/comments/1evnmh6/can_a_rust_binary_use_incompatible_versions_of/) subreddit with some interesting notes in the comments.
